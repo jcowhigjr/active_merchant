@@ -57,7 +57,7 @@ module ActiveMerchant #:nodoc:
       # * <tt>:test</tt> -- +true+ or +false+. If true, perform transactions against the test server.
       #   Otherwise, perform transactions against the production server.
       def initialize(options = {})
-        ActiveMerchant.deprecated "ARB functionality in ActiveMerchant is deprecated and will be removed in a future version. Please contact the ActiveMerchant maintainers if you have an interest in taking ownership of a separate gem that continues support for it."
+        ActiveMerchant.deprecated 'ARB functionality in ActiveMerchant is deprecated and will be removed in a future version. Please contact the ActiveMerchant maintainers if you have an interest in taking ownership of a separate gem that continues support for it.'
         requires!(options, :login, :password)
         super
       end
@@ -147,9 +147,7 @@ module ActiveMerchant #:nodoc:
 
       # Builds recurring billing request
       def build_recurring_request(action, options = {})
-        unless RECURRING_ACTIONS.include?(action)
-          raise StandardError, "Invalid Automated Recurring Billing Action: #{action}"
-        end
+        raise StandardError, "Invalid Automated Recurring Billing Action: #{action}" unless RECURRING_ACTIONS.include?(action)
 
         xml = Builder::XmlMarkup.new(:indent => 2)
         xml.instruct!(:xml, :version => '1.0', :encoding => 'utf-8')
@@ -377,7 +375,7 @@ module ActiveMerchant #:nodoc:
 
       def recurring_commit(action, request)
         url = test? ? test_url : live_url
-        xml = ssl_post(url, request, "Content-Type" => "text/xml")
+        xml = ssl_post(url, request, 'Content-Type' => 'text/xml')
 
         response = recurring_parse(action, xml)
 
@@ -395,7 +393,7 @@ module ActiveMerchant #:nodoc:
         response = {}
         xml = REXML::Document.new(xml)
         root = REXML::XPath.first(xml, "//#{RECURRING_ACTIONS[action]}Response") ||
-               REXML::XPath.first(xml, "//ErrorResponse")
+               REXML::XPath.first(xml, '//ErrorResponse')
         if root
           root.elements.to_a.each do |node|
             recurring_parse_element(response, node)
@@ -407,7 +405,7 @@ module ActiveMerchant #:nodoc:
 
       def recurring_parse_element(response, node)
         if node.has_elements?
-          node.elements.each{|e| recurring_parse_element(response, e) }
+          node.elements.each { |e| recurring_parse_element(response, e) }
         else
           response[node.name.underscore.to_sym] = node.text
         end

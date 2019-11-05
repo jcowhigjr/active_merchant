@@ -32,9 +32,9 @@ class BalancedTest < Test::Unit::TestCase
 
   def test_successful_purchase_with_outside_token
     response = stub_comms(@gateway, :ssl_request) do
-      @gateway.purchase(@amount, "/cards/CCVOX2d7Ar6Ze5TOxHsebeH", @options)
+      @gateway.purchase(@amount, '/cards/CCVOX2d7Ar6Ze5TOxHsebeH', @options)
     end.check_request do |method, endpoint, data, headers|
-      assert_equal("https://api.balancedpayments.com/cards/CCVOX2d7Ar6Ze5TOxHsebeH/debits", endpoint)
+      assert_equal('https://api.balancedpayments.com/cards/CCVOX2d7Ar6Ze5TOxHsebeH/debits', endpoint)
     end.respond_with(debits_response)
 
     assert_success response
@@ -80,11 +80,11 @@ class BalancedTest < Test::Unit::TestCase
     ).then.returns(
       appears_on_response
     )
-    options = @options.merge(appears_on_statement_as: "Homer Electric")
+    options = @options.merge(appears_on_statement_as: 'Homer Electric')
     assert response = @gateway.purchase(@amount, @credit_card, options)
 
     assert_success response
-    assert_equal "BAL*Homer Electric", response.params['debits'][0]['appears_on_statement_as']
+    assert_equal 'BAL*Homer Electric', response.params['debits'][0]['appears_on_statement_as']
   end
 
   def test_authorize_and_capture
@@ -146,10 +146,10 @@ class BalancedTest < Test::Unit::TestCase
     amount = @amount
     assert auth = @gateway.authorize(amount, @credit_card, @options)
     assert_success auth
-    number = auth.params["card_holds"][0]["href"]
+    number = auth.params['card_holds'][0]['href']
     assert void = @gateway.void(number)
     assert_success void
-    assert void.params["card_holds"][0]['voided_at']
+    assert void.params['card_holds'][0]['voided_at']
   end
 
   def test_refund_purchase
@@ -200,7 +200,7 @@ class BalancedTest < Test::Unit::TestCase
 
     assert refund = @gateway.refund(@amount, debit.authorization)
     assert_success refund
-    assert_equal "pending", refund.params['refunds'][0]['status']
+    assert_equal 'pending', refund.params['refunds'][0]['status']
     assert_equal @amount, refund.params['refunds'][0]['amount']
   end
 
@@ -222,7 +222,7 @@ class BalancedTest < Test::Unit::TestCase
     response = stub_comms(@gateway, :ssl_request) do
       @gateway.purchase(@amount, legacy_outside_token, @options)
     end.check_request do |method, endpoint, data, headers|
-      assert_equal("https://api.balancedpayments.com/cards/CC7m1Mtqk6rVJo5tcD1qitAC/debits", endpoint)
+      assert_equal('https://api.balancedpayments.com/cards/CC7m1Mtqk6rVJo5tcD1qitAC/debits', endpoint)
     end.respond_with(debits_response)
 
     assert_success response
@@ -231,42 +231,42 @@ class BalancedTest < Test::Unit::TestCase
   end
 
   def test_capturing_legacy_authorizations
-    v1_authorization = "/v1/marketplaces/TEST-MP73SaFdpQePv9dOaG5wXOGO/holds/HL7dYMhpVBcqAYqxLF5mZtQ5"
-    v11_authorization = "/card_holds/HL7dYMhpVBcqAYqxLF5mZtQ5/debits||/card_holds/HL7dYMhpVBcqAYqxLF5mZtQ5"
+    v1_authorization = '/v1/marketplaces/TEST-MP73SaFdpQePv9dOaG5wXOGO/holds/HL7dYMhpVBcqAYqxLF5mZtQ5'
+    v11_authorization = '/card_holds/HL7dYMhpVBcqAYqxLF5mZtQ5/debits||/card_holds/HL7dYMhpVBcqAYqxLF5mZtQ5'
 
     [v1_authorization, v11_authorization].each do |authorization|
       stub_comms(@gateway, :ssl_request) do
         @gateway.capture(@amount, authorization)
       end.check_request do |method, endpoint, data, headers|
-        assert_equal("https://api.balancedpayments.com/card_holds/HL7dYMhpVBcqAYqxLF5mZtQ5/debits", endpoint)
+        assert_equal('https://api.balancedpayments.com/card_holds/HL7dYMhpVBcqAYqxLF5mZtQ5/debits', endpoint)
       end.respond_with(authorized_debits_response)
     end
   end
 
   def test_voiding_legacy_authorizations
-    v1_authorization = "/v1/marketplaces/TEST-MP73SaFdpQePv9dOaG5wXOGO/holds/HL7dYMhpVBcqAYqxLF5mZtQ5"
-    v11_authorization = "/card_holds/HL7dYMhpVBcqAYqxLF5mZtQ5/debits||/card_holds/HL7dYMhpVBcqAYqxLF5mZtQ5"
+    v1_authorization = '/v1/marketplaces/TEST-MP73SaFdpQePv9dOaG5wXOGO/holds/HL7dYMhpVBcqAYqxLF5mZtQ5'
+    v11_authorization = '/card_holds/HL7dYMhpVBcqAYqxLF5mZtQ5/debits||/card_holds/HL7dYMhpVBcqAYqxLF5mZtQ5'
 
     [v1_authorization, v11_authorization].each do |authorization|
       stub_comms(@gateway, :ssl_request) do
         @gateway.void(authorization)
       end.check_request do |method, endpoint, data, headers|
         assert_equal :put, method
-        assert_equal("https://api.balancedpayments.com/card_holds/HL7dYMhpVBcqAYqxLF5mZtQ5", endpoint)
+        assert_equal('https://api.balancedpayments.com/card_holds/HL7dYMhpVBcqAYqxLF5mZtQ5', endpoint)
         assert_match %r{\bis_void=true\b}, data
       end.respond_with(voided_hold_response)
     end
   end
 
   def test_refunding_legacy_purchases
-    v1_authorization = "/v1/marketplaces/TEST-MP73SaFdpQePv9dOaG5wXOGO/debits/WD2x6vLS7RzHYEcdymqRyNAO"
-    v11_authorization = "|/debits/WD2x6vLS7RzHYEcdymqRyNAO/refunds|"
+    v1_authorization = '/v1/marketplaces/TEST-MP73SaFdpQePv9dOaG5wXOGO/debits/WD2x6vLS7RzHYEcdymqRyNAO'
+    v11_authorization = '|/debits/WD2x6vLS7RzHYEcdymqRyNAO/refunds|'
 
     [v1_authorization, v11_authorization].each do |authorization|
       stub_comms(@gateway, :ssl_request) do
         @gateway.refund(nil, authorization)
       end.check_request do |method, endpoint, data, headers|
-        assert_equal("https://api.balancedpayments.com/debits/WD2x6vLS7RzHYEcdymqRyNAO/refunds", endpoint)
+        assert_equal('https://api.balancedpayments.com/debits/WD2x6vLS7RzHYEcdymqRyNAO/refunds', endpoint)
       end.respond_with(refunds_response)
     end
   end
@@ -277,7 +277,7 @@ class BalancedTest < Test::Unit::TestCase
       @gateway.purchase(@amount, @credit_card, address: a)
     end.check_request do |method, endpoint, data, headers|
       next if endpoint =~ /debits/
-      clean = proc{|s| Regexp.escape(CGI.escape(s))}
+      clean = proc { |s| Regexp.escape(CGI.escape(s)) }
       assert_match(%r{address\[line1\]=#{clean[a[:address1]]}}, data)
       assert_match(%r{address\[line2\]=#{clean[a[:address2]]}}, data)
       assert_match(%r{address\[city\]=#{clean[a[:city]]}}, data)
@@ -302,7 +302,7 @@ class BalancedTest < Test::Unit::TestCase
 
   def test_passing_address_with_blank_zip
     response = stub_comms(@gateway, :ssl_request) do
-      @gateway.purchase(@amount, @credit_card, address: address(zip: "   "))
+      @gateway.purchase(@amount, @credit_card, address: address(zip: '   '))
     end.check_request do |method, endpoint, data, headers|
       next if endpoint =~ /debits/
       assert_no_match(%r{address}, data)
@@ -377,7 +377,7 @@ class BalancedTest < Test::Unit::TestCase
     "marketplaces.events": "/events"
   }
 }
-RESPONSE
+    RESPONSE
   end
 
   def cards_response
@@ -422,7 +422,7 @@ RESPONSE
     "cards.debits": "/cards/{cards.id}/debits"
   }
 }
-RESPONSE
+    RESPONSE
   end
 
   def debits_response
@@ -460,7 +460,7 @@ RESPONSE
     "debits.events": "/debits/{debits.id}/events"
   }
 }
-RESPONSE
+    RESPONSE
   end
 
   def authorized_debits_response
@@ -498,7 +498,7 @@ RESPONSE
     "debits.events": "/debits/{debits.id}/events"
   }
 }
-RESPONSE
+    RESPONSE
   end
 
   def authorized_partial_debits_response
@@ -536,9 +536,8 @@ RESPONSE
     "debits.events": "/debits/{debits.id}/events"
   }
 }
-RESPONSE
+    RESPONSE
   end
-
 
   def declined_response
     <<-RESPONSE
@@ -556,7 +555,7 @@ RESPONSE
     }
   ]
 }
-RESPONSE
+    RESPONSE
   end
 
   def bad_email_response
@@ -577,7 +576,7 @@ RESPONSE
     }
   ]
 }
-RESPONSE
+    RESPONSE
   end
 
   def account_frozen_response
@@ -627,7 +626,7 @@ RESPONSE
     }
   ]
 }
-RESPONSE
+    RESPONSE
   end
 
   def appears_on_response
@@ -665,7 +664,7 @@ RESPONSE
     "debits.events": "/debits/{debits.id}/events"
   }
 }
-RESPONSE
+    RESPONSE
   end
 
   def holds_response
@@ -700,7 +699,7 @@ RESPONSE
     "card_holds.debit": "/debits/{card_holds.debit}"
   }
 }
-RESPONSE
+    RESPONSE
   end
 
   def method_not_allowed_response
@@ -717,7 +716,7 @@ RESPONSE
     }
   ]
 }
-RESPONSE
+    RESPONSE
   end
 
   def unauthorized_response
@@ -734,7 +733,7 @@ RESPONSE
     }
   ]
 }
-RESPONSE
+    RESPONSE
   end
 
   def voided_hold_response
@@ -769,7 +768,7 @@ RESPONSE
     "card_holds.debit": "/debits/{card_holds.debit}"
   }
 }
-RESPONSE
+    RESPONSE
   end
 
   def refunds_response
@@ -801,7 +800,7 @@ RESPONSE
     }
   ]
 }
-RESPONSE
+    RESPONSE
   end
 
   def partial_refunds_response
@@ -833,7 +832,7 @@ RESPONSE
     }
   ]
 }
-RESPONSE
+    RESPONSE
   end
 
   def refunds_pending_response
@@ -865,6 +864,6 @@ RESPONSE
     }
   ]
 }
-RESPONSE
+    RESPONSE
   end
 end
